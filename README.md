@@ -36,6 +36,43 @@ python3 rl_nav.py --algo pg
 - `--moving-avg-window`: 训练曲线平滑窗口
 - `--render-eval`: 评估阶段打印地图轨迹
 
+实时仿真（训练中观察 agent 真实移动和碰撞）：
+
+```bash
+python3 rl_nav.py --algo dqn --live-view --live-every 10 --live-fps 12
+```
+
+- `--live-view`: 打开训练实时可视化窗口
+- `--live-every`: 每隔多少个 episode 渲染一次
+- `--live-fps`: 可视化刷新帧率
+- `--live-trail-len`: 轨迹保留长度
+
+## 评估已训练策略
+
+先加载 checkpoint 做固定地图评估：
+
+```bash
+python3 rl_nav.py --eval-only --checkpoint outputs/dqn_xxx/checkpoints/best.pt --eval-episodes 20
+```
+
+在随机地图分布上做泛化评估：
+
+```bash
+python3 rl_nav.py \
+  --eval-only \
+  --checkpoint outputs/dqn_xxx/checkpoints/best.pt \
+  --eval-random-maps \
+  --eval-num-maps 100 \
+  --map-obstacle-prob 0.20 \
+  --eval-steps 200
+```
+
+- `--eval-random-maps`: 启用随机地图批量评估
+- `--eval-num-maps`: 随机地图数量
+- `--map-obstacle-prob`: 障碍物采样概率
+- `--map-no-require-path`: 不强制地图存在可达路径（默认强制有路）
+- `--random-map-max-attempts`: 单张地图最多重采样次数
+
 ## 输出产物
 
 每次训练在 `run_dir` 下保存：

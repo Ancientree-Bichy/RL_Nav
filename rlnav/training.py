@@ -21,6 +21,7 @@ def train(
     checkpoint_dir: str | Path,
     log_every: int = 50,
     save_every: int = 200,
+    live_viewer: Any | None = None,
 ) -> dict[str, Any]:
     checkpoint_dir = Path(checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -35,10 +36,12 @@ def train(
 
         agent.start_episode()
         step_metrics: list[dict[str, float]] = []
+        if live_viewer is not None:
+            live_viewer.on_episode_start(ep, env)
 
         while not done:
             action = agent.act(state, explore=True)
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, info = env.step(action)
             metrics = agent.observe(
                 state=state,
                 action=action,
@@ -52,6 +55,16 @@ def train(
             state = next_state
             ep_return += reward
             steps += 1
+            if live_viewer is not None:
+                live_viewer.on_step(
+                    episode=ep,
+                    step=steps,
+                    env=env,
+                    action=action,
+                    reward=reward,
+                    done=done,
+                    info=info,
+                )
 
         ep_end_metrics = agent.end_episode()
         merged_metrics = _merge_metrics(step_metrics)
@@ -63,6 +76,13 @@ def train(
             success=env.at_goal,
             extra_metrics=merged_metrics,
         )
+        if live_viewer is not None:
+            live_viewer.on_episode_end(
+                episode=ep,
+                env=env,
+                episode_return=ep_return,
+                success=env.at_goal,
+            )
 
         if ep % log_every == 0:
             avg_ret_key = f"avg_return_last_{logger.window}"

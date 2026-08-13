@@ -122,13 +122,20 @@ class GridWorld:
 
         reward = -0.01
         done = False
+        collision = False
+        collision_type = "none"
+        attempted = (r1, c1)
 
         if not (0 <= r1 < self.H and 0 <= c1 < self.W):
             r1, c1 = r0, c0
             reward += -0.05
+            collision = True
+            collision_type = "wall"
         elif (r1, c1) in self.obstacles:
             r1, c1 = r0, c0
             reward += -0.05
+            collision = True
+            collision_type = "obstacle"
 
         self.agent_r, self.agent_c = r1, c1
 
@@ -139,7 +146,14 @@ class GridWorld:
         if self.t >= self.max_steps:
             done = True
 
-        return self.obs(), float(reward), done, {}
+        info = {
+            "collision": collision,
+            "collision_type": collision_type,
+            "attempted_pos": attempted,
+            "position": (self.agent_r, self.agent_c),
+            "at_goal": self.at_goal,
+        }
+        return self.obs(), float(reward), done, info
 
     def render_ascii(self) -> str:
         grid = []
